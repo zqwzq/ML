@@ -76,13 +76,13 @@ train_data <- data[index$Resample1,]
 XGB_func <- function(seed){
   set.seed(seed)
  xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(nrounds = 400,#xgbreg$bestTune$nrounds,
-                         max_depth = 9,#xgbreg$bestTune$max_depth,
-                         eta = 0.3,#xgbreg$bestTune$eta,
-                         gamma = 0.3,#xgbreg$bestTune$gamma,
-                         colsample_bytree = 0.8,#xgbreg$bestTune$colsample_bytree,
-                         min_child_weight =3,#xgbreg$bestTune$min_child_weight,
-                         subsample = 0.5)#xgbreg$bestTune$subsample)
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
 xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
                 trControl = xgbcontrol,tuneGrid = tune_grid,
                 verbose = FALSE,
@@ -111,13 +111,13 @@ train_data <- data[index$Resample1,]
 XGB_func <- function(seed){
   set.seed(seed)
  xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(nrounds = 100,#xgbreg$bestTune$nrounds,
-                         max_depth = 8,#xgbreg$bestTune$max_depth,
-                         eta = 0.3,#xgbreg$bestTune$eta,
-                         gamma = 0.1,#xgbreg$bestTune$gamma,
-                         colsample_bytree = 0.5,#xgbreg$bestTune$colsample_bytree,
-                         min_child_weight =6,#xgbreg$bestTune$min_child_weight,
-                         subsample = 1)#xgbreg$bestTune$subsample)
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
 xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
                 trControl = xgbcontrol,tuneGrid = tune_grid,
                 verbose = FALSE,
@@ -157,13 +157,13 @@ train_data <- data[index$Resample1,]
 XGB_func <- function(seed){
 set.seed(seed)
 xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(nrounds = 400,#xgbreg$bestTune$nrounds,
-                         max_depth = 9,#xgbreg$bestTune$max_depth,
-                         eta = 0.3,#xgbreg$bestTune$eta,
-                         gamma = 0.3,#xgbreg$bestTune$gamma,
-                         colsample_bytree = 0.8,#xgbreg$bestTune$colsample_bytree,
-                         min_child_weight =3,#xgbreg$bestTune$min_child_weight,
-                         subsample = 0.5)#xgbreg$bestTune$subsample)
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
 xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
                 trControl = xgbcontrol,tuneGrid = tune_grid,
                 verbose = FALSE,
