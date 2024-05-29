@@ -1,0 +1,159 @@
+data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+brtcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(n.trees =seq(50,1500,50),
+                        interaction.depth = seq(1, 10, 1),
+                        shrinkage = seq(0.1, 1, 0.01),
+                        n.minobsinnode = seq(0.1, 1, 0.1))
+brtreg <- train(SOC ~., data = train_data, method = "gbm",
+               trControl = brtcontrol, tuneGrid = tune_grid,
+               verbose = FALSE
+              )
+print(brtreg$results)
+brtreg$bestTune
+BRT_func <- function(seed){
+  set.seed(seed)
+brtcontrol <- trainControl(method = "cv",number = 5, search="grid")
+tune_grid <- expand.grid(n.trees = brtreg$bestTune$n.trees,
+                        interaction.depth = brtreg$bestTune$interaction.depth,
+                        shrinkage = brtreg$bestTune$shrinkage,
+                        n.minobsinnode = brtreg$bestTune$n.minobsinnode)
+brtreg <- train(SOC ~., data = train_data, method = "gbm",
+               trControl = brtcontrol,tuneGrid = tune_grid,
+               verbose = FALSE)
+yp <- predict(brtreg,newdata = test_data)
+y <- test_data$SOC
+Sregg=sum((yp-mean(y))^2)
+Stott=sum((mean(y)-y)^2)
+Sress=sum((yp-y)^2)
+#test_rsquared=Sregg/Stott
+test_rsquared=1-Sress/Stott
+#test_rsquared = R2(y,yp)
+print(seed)
+test_mae= sum(abs(yp-y))/ 32
+test_rmse = sqrt(  (sum((yp-y)^2))  /32 )
+train_rpd <- sd(train_data$SOC)/brtreg$results$RMSE
+train_nrmse <- brtreg$results$RMSE/(max(train_data[,1])-min(train_data[,1]))
+test_rpd <- sd(test_data[,1])/test_rmse
+test_nrmse <- test_rmse/(max(test_data[,1])-min(test_data[,1]))
+  return(c(brtreg$results$RMSE,brtreg$results$Rsquared,brtreg$results$MAE,train_rpd,train_nrmse,test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))
+}
+seed <- 10560#seq(10000,11000,10)
+n <- length(seed)
+zhibiao_list <- lapply(seed, BRT_func)
+zhibiao <- matrix(as.numeric(unique(unlist(zhibiao_list))),nrow = n, ncol = 10, byrow = TRUE)
+sprintf("Train_BRT_RMSE为：%f",mean(zhibiao[,1]))
+sprintf("Train_BRT_R2为：%f",mean(zhibiao[,2]))
+sprintf("Train_BRT_MAE为：%f",mean(zhibiao[,3]))
+sprintf("Train_BRT_RPD为：%f",mean(zhibiao[,4]))
+sprintf("Train_BRT_nRMSE为：%f",mean(zhibiao[,5]))
+sprintf("Test_BRT_RMSE为：%f",mean(zhibiao[,6]))
+sprintf("Test_BRT_R2为：%f",mean(zhibiao[,7]))
+sprintf("Test_BRT_MAE为：%f",mean(zhibiao[,8]))
+sprintf("Test_BRT_RPD为：%f",mean(zhibiao[,9]))
+sprintf("Test_BRT_nRMSE为：%f",mean(zhibiao[,10]))
+
+#测试集预测 散点图
+data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+RF_func <- function(seed){
+  set.seed(seed)
+ brtcontrol <- trainControl(method = "cv",number = 5, search="grid")
+tune_grid <- expand.grid(n.trees = brtreg$bestTune$n.trees,
+                        interaction.depth = brtreg$bestTune$interaction.depth,
+                        shrinkage = brtreg$bestTune$shrinkage,
+                        n.minobsinnode = brtreg$bestTune$n.minobsinnode)
+brtreg <- train(SOC ~., data = train_data, method = "gbm",
+               trControl = brtcontrol,tuneGrid = tune_grid,
+               verbose = FALSE)
+yp <- predict(brtreg,newdata = test_data)
+yp <- as.data.frame(yp)
+return(yp)
+}
+seed <- seq(10000,20000,100)
+n <- length(seed)
+ypall <- lapply(seed, RF_func)
+total <- 0
+for (i in 1:n) {
+  total <-total+ypall[[i]]
+}
+ypall_mean <- total/n
+
+
+##反演
+data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
+fanyan_data <- read.xlsx("E:\\研究生论文\\真正的大论文\\remotesensingdata\\POINT\\200W-.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+BRT_func <- function(seed){
+  set.seed(seed)
+ control <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(n.trees = brtreg$bestTune$n.trees,
+                        interaction.depth = brtreg$bestTune$interaction.depth,
+                        shrinkage = brtreg$bestTune$shrinkage,
+                        n.minobsinnode = brtreg$bestTune$n.minobsinnode)
+brtreg <- train(SOC ~., data = train_data, method = "gbm",
+               trControl = brtcontrol,tuneGrid = tune_grid,
+               verbose = FALSE)
+fanyan_yp <- predict(brtreg,newdata = fanyan_data)
+fanyan_yp <- as.data.frame(fanyan_yp)
+return(fanyan_yp)
+}
+seed <- seq(10000,11000,10)
+n <- length(seed)
+fanyan_ypall <- lapply(seed, BRT_func)
+total <- 0
+for (i in 1:n) {
+  total <-total+fanyan_ypall[[i]]
+}
+fanyan_ypall_mean <- total/n
+write.table(fanyan_ypall_mean,file = "E:\\研究生论文\\真正的大论文\\remotesensingdata\\FANYAN\\BRT_200w-_prediction_mean.txt",row.names = F,col.names = F)
+a <- nrow(fanyan_data)
+danxiangyuan <- rep(0,100)
+quantu <- rep(0,a)
+for(k in 1:a){
+  for (j in 1:100){
+    danxiangyuan[j] <- fanyan_ypall[[j]][["fanyan_yp"]][k]
+  }
+  quantu[k] <- sd(danxiangyuan)
+}
+write.table(quantu,file = "E:\\研究生论文\\真正的大论文\\remotesensingdata\\FANYAN\\BRT_200w-_prediction_SD.txt",row.names = F,col.names = F)
+
+#100次重要性
+data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\choosed.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+BRT_func <- function(seed){
+set.seed(seed)
+brtcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(n.trees = brtreg$bestTune$n.trees,
+                        interaction.depth = brtreg$bestTune$interaction.depth,
+                        shrinkage = brtreg$bestTune$shrinkage,
+                        n.minobsinnode = brtreg$bestTune$n.minobsinnode)
+brtreg <- train(SOC ~., data = train_data, method = "gbm",
+               trControl = brtcontrol,tuneGrid = tune_grid,
+               verbose = FALSE)
+zhongyaoxing <- summary(brtreg)
+
+  return(zhongyaoxing)
+}
+seed <- seq(10000,11000,10)
+n <- length(seed)
+zhibiao_list <- lapply(seed, BRT_func)
+total <- 0
+for (i in 1:n) {
+  a<- as.data.frame(zhibiao_list[[i]])
+  sorted_df <- a[order(row.names(a)), ]
+  total <-total+sorted_df$rel.inf
+}
+zhongyaoxing <- total/length(seed)
