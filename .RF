@@ -1,0 +1,139 @@
+#随机森林分出训练集和测试集
+data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\筛选2.xlsx")
+set.seed(200)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+rfcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(mtry =seq(1,56,1))
+rfreg <- train(SOC ~., data = train_data, method = "rf",
+                trControl = rfcontrol,tuneGrid = tune_grid, verbose = FALSE)
+rfreg$bestTune
+RF_func <- function(seed){
+set.seed(seed)
+control <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(mtry = rfreg$bestTune)#as.numeric(rfreg$bestTune) )
+rfreg <- train(SOC ~., data = train_data, method = "rf",
+                trControl = control,tuneGrid = tune_grid,
+                verbose = FALSE)
+yp <- predict(rfreg,newdata = test_data)
+y <- test_data$SOC
+Sregg=sum((yp-mean(y))^2)
+Stott=sum((mean(y)-y)^2)
+Sress=sum((yp-y)^2)
+test_rsquared=1-Sress/Stott
+test_mae= sum(abs(yp-y))/ 32
+test_rmse = sqrt(  (sum((yp-y)^2))  /32  )
+test_rpd <- sd(test_data[,1])/test_rmse
+test_nrmse <- test_rmse/(max(test_data[,1])-min(test_data[,1]))
+train_rpd <- sd(train_data[,1])/rfreg$results$RMSE
+train_nrmse <- rfreg$results$RMSE/(max(train_data[,1])-min(train_data[,1]))
+print(seed)
+  return(c(rfreg$results$RMSE,rfreg$results$Rsquared,
+           rfreg$results$MAE,train_rpd,train_nrmse,
+           test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))}
+seed <- seq(10000,11000,100)
+n <- length(seed)
+zhibiao_list <- lapply(seed, RF_func)
+zhibiao <- matrix(as.numeric(unique(unlist(zhibiao_list))),nrow = n, ncol = 10, byrow = TRUE)
+sprintf("Train_RF_RMSE为：%f",mean(zhibiao[,1]))
+sprintf("Train_RF_R2为：%f",mean(zhibiao[,2]))
+sprintf("Train_RF_MAE为：%f",mean(zhibiao[,3]))
+sprintf("Train_RF_RPD为：%f",mean(zhibiao[,4]))
+sprintf("Train_RF_nRMSE为：%f",mean(zhibiao[,5]))
+sprintf("Test_RF_RMSE为：%f",mean(zhibiao[,6]))
+sprintf("Test_RF_R2为：%f",mean(zhibiao[,7]))
+sprintf("Test_RF_MAE为：%f",mean(zhibiao[,8]))
+sprintf("Test_RF_RPD为：%f",mean(zhibiao[,9]))
+sprintf("Test_RF_nRMSE为：%f",mean(zhibiao[,10]))
+
+
+#测试集预测 散点图
+data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+RF_func <- function(seed){
+  set.seed(seed)
+ control <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(mtry = rfreg$bestTune)#rfreg$bestTune )
+rfreg <- train(SOC ~., data = train_data, method = "rf",
+                trControl = control,tuneGrid = tune_grid,
+                verbose = FALSE)
+yp <- predict(rfreg,newdata = test_data)
+yp <- as.data.frame(yp)
+return(yp)
+}
+seed <- seq(10000,11000,100)
+n <- length(seed)
+ypall <- lapply(seed, RF_func)
+total <- 0
+for (i in 1:n) {
+  total <-total+ypall[[i]]
+}
+ypall_mean <- total/n
+
+##循环100次预测
+data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
+fanyan_data <- read.xlsx("E:\\研究生论文\\真正的大论文\\remotesensingdata\\POINT\\200W-.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+RF_func <- function(seed){
+  set.seed(seed)
+ control <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(mtry = rfreg$bestTune)#rfreg$bestTune )
+rfreg <- train(SOC ~., data = train_data, method = "rf",
+                trControl = control,tuneGrid = tune_grid,
+                verbose = FALSE)
+fanyan_yp <- predict(rfreg,newdata = fanyan_data)
+fanyan_yp <- as.data.frame(fanyan_yp)
+return(fanyan_yp)
+}
+seed <- seq(10000,11000,100)
+n <- length(seed)
+fanyan_ypall <- lapply(seed, RF_func)
+total <- 0
+for (i in 1:n) {
+  total <-total+fanyan_ypall[[i]]
+}
+fanyan_ypall_mean <- total/n
+write.table(fanyan_ypall_mean,file = "E:\\研究生论文\\真正的大论文\\remotesensingdata\\FANYAN\\RF_200W-_prediction_mean.txt",row.names = F,col.names = F)
+
+a <- nrow(fanyan_data)
+danxiangyuan <- rep(0,100)
+quantu <- rep(0,a)
+for(k in 1:a){
+  for (j in 1:100){
+    danxiangyuan[j] <- fanyan_ypall[[j]][["fanyan_yp"]][k]
+  }
+  quantu[k] <- sd(danxiangyuan)
+}
+write.table(quantu,file = "E:\\研究生论文\\真正的大论文\\remotesensingdata\\FANYAN\\RF_200W-_prediction_SD.txt",row.names = F,col.names = F)
+
+#重要性
+data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
+set.seed(500)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+RF_func <- function(seed){
+set.seed(seed)
+control <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(mtry = rfreg$bestTune)#as.numeric(rfreg$bestTune) )
+rfreg <- train(SOC ~., data = train_data, method = "rf",
+                trControl = control,tuneGrid = tune_grid,
+                verbose = FALSE)
+zhongyaoxing <- varImp(rfreg)[["importance"]]
+  return(zhongyaoxing)
+}
+seed <- seq(10000,11000,100)
+n <- length(seed)
+zhibiao_list <- lapply(seed, RF_func)
+total <- 0
+for (i in 1:n) {
+  total <-total+zhibiao_list[[i]]
+}
+zhongyaoxing <- total/length(seed)
