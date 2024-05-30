@@ -1,6 +1,6 @@
 #随机森林分出训练集和测试集
 data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\筛选2.xlsx")
-set.seed(200)
+set.seed(500)
 index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
@@ -139,7 +139,7 @@ zhongyaoxing <- total/length(seed)
 
 ##SHAP
 data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\choosed2.xlsx")
-set.seed(200)
+set.seed(500)
 index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
