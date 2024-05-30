@@ -64,16 +64,16 @@ sprintf("Test_XGB_RPD为：%f",mean(zhibiao[,9]))
 sprintf("Test_XGB_nRMSE为：%f",mean(zhibiao[,10]))
 xgbreg$bestTune
 
-##测试集预测 散点图
+##测试集预测 用于散点图绘制
 
 data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\choosed.xlsx")
-set.seed(200)
+set.seed(500)
 index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
 XGB_func <- function(seed){
   set.seed(seed)
- xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
+xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
 tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
                          max_depth = xgbreg$bestTune$max_depth,
                          eta = xgbreg$bestTune$eta,
@@ -148,7 +148,7 @@ write.table(quantu,file = "E:\\研究生论文\\真正的大论文\\remotesensin
 
 ##重要性
 data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\choosed.xlsx")
-set.seed(200)
+set.seed(500)
 index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
