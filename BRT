@@ -4,7 +4,7 @@ index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
 brtcontrol <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(n.trees =seq(50,1500,50),
+tune_grid <- expand.grid(n.trees =seq(50,2000,50),
                         interaction.depth = seq(1, 10, 1),
                         shrinkage = seq(0.1, 1, 0.01),
                         n.minobsinnode = seq(0.1, 1, 0.1))
@@ -16,7 +16,7 @@ print(brtreg$results)
 brtreg$bestTune
 BRT_func <- function(seed){
   set.seed(seed)
-brtcontrol <- trainControl(method = "cv",number = 5, search="grid")
+brtcontrol <- trainControl(method = "cv",number = 10, search="grid")
 tune_grid <- expand.grid(n.trees = brtreg$bestTune$n.trees,
                         interaction.depth = brtreg$bestTune$interaction.depth,
                         shrinkage = brtreg$bestTune$shrinkage,
@@ -29,9 +29,7 @@ y <- test_data$SOC
 Sregg=sum((yp-mean(y))^2)
 Stott=sum((mean(y)-y)^2)
 Sress=sum((yp-y)^2)
-#test_rsquared=Sregg/Stott
-test_rsquared=1-Sress/Stott
-#test_rsquared = R2(y,yp)
+test_rsquared=Sregg/Stott
 print(seed)
 test_mae= sum(abs(yp-y))/ 32
 test_rmse = sqrt(  (sum((yp-y)^2))  /32 )
@@ -41,7 +39,7 @@ test_rpd <- sd(test_data[,1])/test_rmse
 test_nrmse <- test_rmse/(max(test_data[,1])-min(test_data[,1]))
   return(c(brtreg$results$RMSE,brtreg$results$Rsquared,brtreg$results$MAE,train_rpd,train_nrmse,test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))
 }
-seed <- 10560#seq(10000,11000,10)
+seed <- seq(10000,11000,10)
 n <- length(seed)
 zhibiao_list <- lapply(seed, BRT_func)
 zhibiao <- matrix(as.numeric(unique(unlist(zhibiao_list))),nrow = n, ncol = 10, byrow = TRUE)
@@ -76,7 +74,7 @@ yp <- predict(brtreg,newdata = test_data)
 yp <- as.data.frame(yp)
 return(yp)
 }
-seed <- seq(10000,20000,100)
+seed <- seq(10000,11000,10)
 n <- length(seed)
 ypall <- lapply(seed, RF_func)
 total <- 0
