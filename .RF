@@ -21,7 +21,7 @@ y <- test_data$SOC
 Sregg=sum((yp-mean(y))^2)
 Stott=sum((mean(y)-y)^2)
 Sress=sum((yp-y)^2)
-test_rsquared=1-Sress/Stott
+test_rsquared=Sregg/Stott
 test_mae= sum(abs(yp-y))/ 32
 test_rmse = sqrt(  (sum((yp-y)^2))  /32  )
 test_rpd <- sd(test_data[,1])/test_rmse
@@ -47,7 +47,6 @@ sprintf("Test_RF_MAE为：%f",mean(zhibiao[,8]))
 sprintf("Test_RF_RPD为：%f",mean(zhibiao[,9]))
 sprintf("Test_RF_nRMSE为：%f",mean(zhibiao[,10]))
 
-
 #测试集预测 散点图
 data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
 set.seed(500)
@@ -57,7 +56,7 @@ train_data <- data[index$Resample1,]
 RF_func <- function(seed){
   set.seed(seed)
  control <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(mtry = rfreg$bestTune)#rfreg$bestTune )
+tune_grid <- expand.grid(mtry = rfreg$bestTune)
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
                 verbose = FALSE)
@@ -84,7 +83,7 @@ train_data <- data[index$Resample1,]
 RF_func <- function(seed){
   set.seed(seed)
  control <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(mtry = rfreg$bestTune)#rfreg$bestTune )
+tune_grid <- expand.grid(mtry = rfreg$bestTune)
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
                 verbose = FALSE)
@@ -122,7 +121,7 @@ train_data <- data[index$Resample1,]
 RF_func <- function(seed){
 set.seed(seed)
 control <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(mtry = rfreg$bestTune)#as.numeric(rfreg$bestTune) )
+tune_grid <- expand.grid(mtry = rfreg$bestTune)
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
                 verbose = FALSE)
@@ -137,3 +136,94 @@ for (i in 1:n) {
   total <-total+zhibiao_list[[i]]
 }
 zhongyaoxing <- total/length(seed)
+
+##SHAP
+data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\choosed2.xlsx")
+set.seed(200)
+index <- createDataPartition(data$SOC,p = 0.7)
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+#####################################################RF
+rfcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(mtry = rfreg$bestTune)
+rfreg <- train(SOC ~., data = train_data, method = "rf",
+                trControl = rfcontrol,tuneGrid = tune_grid,
+                verbose = FALSE)
+object_model <- rfreg  #rfreg可以进行替换
+traindatax <- test_data[,-1]  #训练集的自变量部分
+library(iml) #可以输出变量重要性，变量效应，单个变量
+predictor_model <- Predictor$new(
+  object_model,
+  data = traindatax,
+  y = test_data$SOC
+)
+
+#所有样本的shap
+library(future)
+library(future.callr)
+plan("callr",workers = 3)
+shap_model_all <- list()
+for (i in sample(nrow(test_data),32)) {
+  shapi <- Shapley$new(
+    predictor_model,
+    x.interest = traindatax[i,]
+  )
+  shap_model_all[[i]] <- shapi$results
+  print(i)
+}
+
+#散点图
+bind_rows(shap_model_all) %>%
+    mutate(value = str_remove(str_extract(feature.value,"=.+"),"="),value = as.numeric(value)) %>%
+    group_by(feature) %>%
+    mutate(value = (value-min(value))/(max(value)-min(value))) %>%
+    ungroup() %>%
+    ggplot(aes(x = phi ,y = feature,color = value))+
+    geom_jitter(size = 3,height = 0,width = 0)+
+    scale_color_gradient(
+        low = "#ffcc33",
+        high = "#6600cc",
+        breaks = c(0,1),
+        labels = c("Low","High"),
+        guide = guide_colorbar(barwidth = 1,barheight = 10)
+    )+
+    labs(x = "SHAP value",family = "serif",color = "Feature     value")+
+    labs(y = "",family = "serif")+
+  
+theme(axis.text.y = element_text(family = "Times New Roman", size = 2))
+
+write.table(result,file = "E:\\研究生论文\\大论文\\数据\\SHAP图\\XGB2\\SHAP.txt",row.names = T,col.names = T)
+
+shap <- explain(
+  object_model,
+  X = as.data.frame(traindatax),
+  nsim = 10,
+  pred_wrapper = function(model,newdata){
+    predict(model,newdata) %>% pull(1)
+  }
+)
+data1 <- shap %>%
+  as.data.frame() %>%
+  mutate(id =1:n()) %>%
+  pivot_longer(cols = -(ncol(traindatax)+1),values_to = "shap")
+
+data2 <- traindatax %>%
+  mutate(id =1:n()) %>%
+  pivot_longer(cols = -(ncol(traindatax)+1))
+
+data1 %>%
+  left_join(data2) %>%
+  rename("feature" = "name") %>%
+  group_by(feature) %>%
+  mutate(value = (value-min(value))/(max(value)-min(value))) %>%
+  ggplot(aes(x = shap ,y = feature,color = value))+
+  geom_jitter(size = 2,height = 0.1,width = 0)+
+  scale_color_gradient(
+    low = "#ffcc33",
+    high = "#6600cc",
+    breaks = c(0,1),
+    labels = c("Low","High"),
+    guide = guide_colorbar(barwidth = 1,barheight = 10)
+  )+
+  labs(x = "SHAP value",color = "Feature value")+
+  theme_bw()
