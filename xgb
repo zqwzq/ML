@@ -4,13 +4,13 @@ index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
 xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(nrounds = seq(100,1100,200),
-                         max_depth = seq(1,10,3) ,##(0,10)
+tune_grid <- expand.grid(nrounds = seq(100,2000,100),
+                         max_depth = seq(1,10,1) ,
                          eta = 0.3,
-                         gamma = seq(0,0.5,0.2),
-                         colsample_bytree = seq(0.5,1,0.2),##(0.5,1)
-                         min_child_weight =seq(1,10,3),
-                         subsample = seq(0.1,1,0.1))##(0,1)
+                         gamma = seq(0,0.5,0.1),
+                         colsample_bytree = seq(0.5,1,0.1),
+                         min_child_weight =seq(1,10,1),
+                         subsample = seq(0.1,1,0.1))
 xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
                 trControl = xgbcontrol,tuneGrid = tune_grid,
                 verbose = FALSE,
@@ -38,9 +38,7 @@ y <- test_data$SOC
 Sregg=sum((yp-mean(y))^2)
 Stott=sum((mean(y)-y)^2)
 Sress=sum((yp-y)^2)
-#test_rsquared=Sregg/Stott
-#test_rsquared = R2(y,yp)
-test_rsquared=1-Sress/Stott
+test_rsquared=Sregg/Stott
 test_mae= sum(abs(yp-y))/ 32
 test_rmse = sqrt(  (sum((yp-y)^2))  /32  )
 
