@@ -1,0 +1,263 @@
+##################################################################
+## The data is read and randomly divided 7:3 into training sets and test sets
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx")
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)   
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)   
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+
+##################################################################
+## The mesh is defined and the optimal parameters are adjusted by grid search method
+## Set 10 fold cross validation
+xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
+## Set adjustment grid and spacing.
+tune_grid <- expand.grid(nrounds = seq(100,2000,100),
+                         max_depth = seq(1,10,1) ,
+                         eta = 0.3,
+                         gamma = seq(0,0.5,0.1),
+                         colsample_bytree = seq(0.5,1,0.1),
+                         min_child_weight =seq(1,10,1),
+                         subsample = seq(0.1,1,0.1))
+## Different parameters are used for machine learning modeling to find the optimal parameters
+xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
+                trControl = xgbcontrol,tuneGrid = tune_grid,
+                verbose = FALSE,
+                verbosity = 0
+                )
+## Print the optimal parameter combination
+print(xgbreg$bestTune)
+
+##################################################################
+##Use different seed numbers to build machine learning models, and output precision indicators of training sets and test sets. Refer to Step C in README for details.
+## Define a machine learning function for a multi-seed loop
+XGB_func <- function(seed){
+## Model with different seed numbers
+set.seed(seed)
+## Set 10 fold cross validation
+xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
+## The optimal parameters are used as the model parameters for machine learning modeling
+xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
+                trControl = xgbcontrol,tuneGrid = tune_grid,
+                verbose = FALSE,
+                verbosity = 0
+                )
+## The optimal parameters are used as the model parameters for machine learning modeling
+yp <- predict(xgbreg,newdata = test_data)
+## Extract the measured data of the test set
+y <- test_data$SOC          
+Sregg=sum((yp-mean(y))^2)
+Stott=sum((mean(y)-y)^2)
+Sress=sum((yp-y)^2)
+## Calculate the accuracy index R2 of the test set
+test_rsquared=Sregg/Stott
+## Calculate the accuracy index MAE of the test set
+test_mae= sum(abs(yp-y))/ 32
+## Calculate the accuracy index RMSE of the test set
+test_rmse = sqrt(  (sum((yp-y)^2))  /32  )     
+## Calculate the accuracy index RPD of the test set
+test_rpd <- sd(test_data[,1])/test_rmse
+## Calculate the accuracy index nRMSE of the test set
+test_nrmse <- test_rmse/(max(test_data[,1])-min(test_data[,1]))
+## Calculate the accuracy index RPD of the train set
+train_rpd <- sd(train_data[,1])/rfreg$results$RMSE
+## Extract the nRMSE of the model
+train_nrmse <- rfreg$results$RMSE/(max(train_data[,1])-min(train_data[,1])) 
+## Returns each precision indicator of the model
+return(c(rfreg$results$RMSE,rfreg$results$Rsquared,
+           rfreg$results$MAE,train_rpd,train_nrmse,
+           test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))}   
+## Sets the number of seeds to use for machine learning modeling
+seed <- seq(10000,11000,100)    
+## The number of seed number is extracted and used to calculate the average value of precision index
+n <- length(seed)    
+## The set number of seeds is applied for circular machine learning modeling
+zhibiao_list <- lapply(seed, XGB_func)
+## Define a matrix for storing precision indicators and calculating average values
+zhibiao <- matrix(as.numeric(unique(unlist(zhibiao_list))),nrow = n, ncol = 10, byrow = TRUE)   
+## Output the RMSE of the training set
+sprintf("Train_RF_RMSE is ：%f",mean(zhibiao[,1]))   
+## Output the R2 of the training set
+sprintf("Train_RF_R2 is ：%f",mean(zhibiao[,2]))   
+## Output the MAE of the training set
+sprintf("Train_RF_MAE is ：%f",mean(zhibiao[,3]))   
+## Output the RPD of the training set
+sprintf("Train_RF_RPD is ：%f",mean(zhibiao[,4]))   
+## Output the nRMSE of the training set
+sprintf("Train_RF_nRMSE is ：%f",mean(zhibiao[,5]))  
+## Output the RMSE of the test set
+sprintf("Test_RF_RMSE is ：%f",mean(zhibiao[,6]))   
+## Output the R2 of the test set
+sprintf("Test_RF_R2 is ：%f",mean(zhibiao[,7]))   
+## Output the MAE of the test set
+sprintf("Test_RF_MAE is ：%f",mean(zhibiao[,8]))   
+## Output the RPD of the test set
+sprintf("Test_RF_RPD is ：%f",mean(zhibiao[,9]))   
+## Output the nRMSE of the test set
+sprintf("Test_RF_nRMSE is ：%f",mean(zhibiao[,10]))   
+##################################################################
+##The built model is used to predict the data of the test set, and 1:1 line mapping is performed with the measured values of the test set, which is used to intuitively compare the prediction performance of the model
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx")
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)  
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)  
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+##################################################################
+##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+## Define a machine learning function for a multi-seed loop
+XGB_func <- function(seed){
+## Model with different seed numbers
+set.seed(seed)
+## Set 10 fold cross validation
+xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
+## The optimal parameters are used as the model parameters for machine learning modeling
+xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
+                trControl = xgbcontrol,tuneGrid = tune_grid,
+                verbose = FALSE,
+                verbosity = 0
+                )
+## The established machine learning model is used to predict the test set data
+yp <- predict(xgbreg,newdata = test_data)
+##  Convert the predicted test set dependent variable to data frame format
+yp <- as.data.frame(yp)
+return(yp)
+}
+## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
+seed <- seq(10000,11000,100) 
+## The number of seed number is extracted and used to calculate the average value of precision index
+n <- length(seed)  
+## The set number of seeds is applied for circular machine learning modeling
+ypall <- lapply(seed, XGB_func)    
+##  Initializes a variable to hold the predicted test set dependent variable
+total <- 0   
+##  Add up the results of each run
+for (i in 1:n) {
+  total <-total+ypall[[i]]
+}    
+## Gets the average of multiple model predictions
+ypall_mean <- total/n
+##################################################################
+##The SOC content of the whole study area is predicted, that is, the independent variable values of each pixel are brought into the established model to predict SOC, see step F in README
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx") 
+## Read the independent variable data of each pixel in the study area
+fanyan_data <- read.xlsx("E:\\fanyan.xlsx")   
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)  
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)  
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+##################################################################
+##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+## Define a machine learning function for a multi-seed loop
+XGB_func <- function(seed){
+## Model with different seed numbers
+set.seed(seed)
+## Set 10 fold cross validation
+xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
+## The optimal parameters are used as the model parameters for machine learning modeling
+xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
+                trControl = xgbcontrol,tuneGrid = tune_grid,
+                verbose = FALSE,
+                verbosity = 0
+                )
+##The independent variable value of each pixel is brought into the model to predict the SOC value of each pixel
+fanyan_yp <- predict(xgbreg,newdata = fanyan_data)
+##  Convert the SOC value to data frame format
+fanyan_yp <- as.data.frame(fanyan_yp)
+return(fanyan_yp)
+}
+## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
+seed <- seq(10000,11000,100)
+## The number of seed number is extracted and used to calculate the average value of precision index
+n <- length(seed)
+## The set number of seeds is applied for circular machine learning modeling
+fanyan_ypall <- lapply(seed, XGB_func)
+##  Initializes a variable to hold the predicted SOC value
+total <- 0
+##  Add up the results of each run
+for (i in 1:n) {
+  total <-total+fanyan_ypall[[i]]
+}
+## Gets the average of multiple model predictions
+fanyan_ypall_mean <- total/n
+## Write out the inversion results
+write.table(fanyan_ypall_mean,file = "E:\\FANYAN.txt",row.names = F,col.names = F)
+##################################################################
+##Evaluate the importance of each variable in the prediction model, obtain the importance of 100 model cycles, and calculate the relative importance of each variable
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx") 
+## Read the independent variable data of each pixel in the study area
+fanyan_data <- read.xlsx("E:\\fanyan.xlsx")   
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)  
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)  
+test_data <- data[-index$Resample1,]
+train_data <- data[index$Resample1,]
+##################################################################
+##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+## Define a machine learning function for a multi-seed loop
+XGB_func <- function(seed){
+## Model with different seed numbers
+set.seed(seed)
+## Set 10 fold cross validation
+xgbcontrol <- trainControl(method = "cv",number = 10, search="grid")
+tune_grid <- expand.grid(nrounds = xgbreg$bestTune$nrounds,
+                         max_depth = xgbreg$bestTune$max_depth,
+                         eta = xgbreg$bestTune$eta,
+                         gamma = xgbreg$bestTune$gamma,
+                         colsample_bytree = xgbreg$bestTune$colsample_bytree,
+                         min_child_weight =xgbreg$bestTune$min_child_weight,
+                         subsample = xgbreg$bestTune$subsample)
+## The optimal parameters are used as the model parameters for machine learning modeling
+xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
+                trControl = xgbcontrol,tuneGrid = tune_grid,
+                verbose = FALSE,
+                verbosity = 0
+                )
+## Get the importance of each variable from the model
+zhongyaoxing <- varImp(xgbreg)[["importance"]]
+  return(zhongyaoxing)
+}
+## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
+seed <- seq(10000,11000,100)
+## The number of seed number is extracted and used to calculate the average value of precision index
+n <- length(seed)
+## The set number of seeds is applied for circular machine learning modeling
+zhongyaoxing_list <- lapply(seed, RF_func)
+##  Initialize a variable to store the importance of each predictor
+total <- 0
+##  Add the importance of each variable for each loop
+for (i in 1:n) {
+  total <-total+zhongyaoxing_list[[i]]
+}
+##  The average value of variable importance is obtained by dividing the number of models
+zhongyaoxing <- total/length(seed)
