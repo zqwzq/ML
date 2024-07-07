@@ -1,124 +1,186 @@
 ##################################################################
 ## The data is read and randomly divided 7:3 into training sets and test sets
-data <- read.xlsx("E:\\data.xlsx")     ## Where "E:\\data.xlsx" is the path of data storage
-set.seed(500)     ## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
-index <- createDataPartition(data$SOC,p = 0.7)   ## 70% as the training set, 30% as the test set
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx")
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)   
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)   
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
+
 ##################################################################
 ## The mesh is defined and the optimal parameters are adjusted by grid search method
-rfcontrol <- trainControl(method = "cv",number = 10, search="grid")   ## Set 10 fold cross validation
-tune_grid <- expand.grid(mtry =seq(1,56,1))     ## Set adjustment grid and spacing.
+## Set 10 fold cross validation
+rfcontrol <- trainControl(method = "cv",number = 10, search="grid")   
+## Set adjustment grid and spacing.
+tune_grid <- expand.grid(mtry =seq(1,56,1))    
+## Different parameters are used for machine learning modeling to find the optimal parameters
 rfreg <- train(SOC ~., data = train_data, method = "rf",
-                trControl = rfcontrol,tuneGrid = tune_grid, verbose = FALSE)    ## Different parameters are used for machine learning modeling to find the optimal parameters
-rfreg$bestTune          ## Print the optimal parameter combination
+                trControl = rfcontrol,tuneGrid = tune_grid, verbose = FALSE)    
+## Print the optimal parameter combination
+rfreg$bestTune          
+
 ##################################################################
 ##Use different seed numbers to build machine learning models, and output precision indicators of training sets and test sets. Refer to Step C in README for details.
-RF_func <- function(seed){        ## Define a machine learning function for a multi-seed loop
-set.seed(seed)                   ## Model with different seed numbers
-control <- trainControl(method = "cv",number = 10, search="grid")   ## Set 10 fold cross validation
+## Define a machine learning function for a multi-seed loop
+RF_func <- function(seed){        
+## Model with different seed numbers
+set.seed(seed)     
+## Set 10 fold cross validation
+control <- trainControl(method = "cv",number = 10, search="grid")   
 tune_grid <- expand.grid(mtry = rfreg$bestTune)   
+## The optimal parameters are used as the model parameters for machine learning modeling
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
-                verbose = FALSE)       ## The optimal parameters are used as the model parameters for machine learning modeling
-yp <- predict(rfreg,newdata = test_data)    ## The established machine learning model is used to predict the test set data
-y <- test_data$SOC          ## Extract the measured data of the test set
+                verbose = FALSE)       
+## The established machine learning model is used to predict the test set data
+yp <- predict(rfreg,newdata = test_data)   
+## Extract the measured data of the test set
+y <- test_data$SOC          
 Sregg=sum((yp-mean(y))^2)
 Stott=sum((mean(y)-y)^2)
 Sress=sum((yp-y)^2)
-test_rsquared=Sregg/Stott        ## Calculate the accuracy index R2 of the test set
-test_mae= sum(abs(yp-y))/ 32     ## Calculate the accuracy index MAE of the test set
-test_rmse = sqrt(  (sum((yp-y)^2))  /32  )     ## Calculate the accuracy index RMSE of the test set
-test_rpd <- sd(test_data[,1])/test_rmse        ## Calculate the accuracy index RPD of the test set
-test_nrmse <- test_rmse/(max(test_data[,1])-min(test_data[,1]))      ## Calculate the accuracy index nRMSE of the test set
-train_rpd <- sd(train_data[,1])/rfreg$results$RMSE       ## Calculate the accuracy index RPD of the train set
-train_nrmse <- rfreg$results$RMSE/(max(train_data[,1])-min(train_data[,1]))      ## Extract the nRMSE of the model
-  return(c(rfreg$results$RMSE,rfreg$results$Rsquared,
+## Calculate the accuracy index R2 of the test set
+test_rsquared=Sregg/Stott
+## Calculate the accuracy index MAE of the test set
+test_mae= sum(abs(yp-y))/ 32
+## Calculate the accuracy index RMSE of the test set
+test_rmse = sqrt(  (sum((yp-y)^2))  /32  )     
+## Calculate the accuracy index RPD of the test set
+test_rpd <- sd(test_data[,1])/test_rmse
+## Calculate the accuracy index nRMSE of the test set
+test_nrmse <- test_rmse/(max(test_data[,1])-min(test_data[,1]))
+## Calculate the accuracy index RPD of the train set
+train_rpd <- sd(train_data[,1])/rfreg$results$RMSE
+## Extract the nRMSE of the model
+train_nrmse <- rfreg$results$RMSE/(max(train_data[,1])-min(train_data[,1])) 
+## Returns each precision indicator of the model
+return(c(rfreg$results$RMSE,rfreg$results$Rsquared,
            rfreg$results$MAE,train_rpd,train_nrmse,
-           test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))}   ## Returns each precision indicator of the model
-seed <- seq(10000,11000,100)    ## Sets the number of seeds to use for machine learning modeling
-n <- length(seed)     ## The number of seed number is extracted and used to calculate the average value of precision index
-zhibiao_list <- lapply(seed, RF_func)    ## The set number of seeds is applied for circular machine learning modeling
-zhibiao <- matrix(as.numeric(unique(unlist(zhibiao_list))),nrow = n, ncol = 10, byrow = TRUE)   ## Define a matrix for storing precision indicators and calculating average values
-sprintf("Train_RF_RMSE is ：%f",mean(zhibiao[,1]))   ## Output the RMSE of the training set
-sprintf("Train_RF_R2 is ：%f",mean(zhibiao[,2]))   ## Output the R2 of the training set
-sprintf("Train_RF_MAE is ：%f",mean(zhibiao[,3]))   ## Output the MAE of the training set
-sprintf("Train_RF_RPD is ：%f",mean(zhibiao[,4]))   ## Output the RPD of the training set
-sprintf("Train_RF_nRMSE is ：%f",mean(zhibiao[,5]))   ## Output the nRMSE of the training set
-sprintf("Test_RF_RMSE is ：%f",mean(zhibiao[,6]))   ## Output the RMSE of the test set
-sprintf("Test_RF_R2 is ：%f",mean(zhibiao[,7]))   ## Output the R2 of the test set
-sprintf("Test_RF_MAE is ：%f",mean(zhibiao[,8]))   ## Output the MAE of the test set
-sprintf("Test_RF_RPD is ：%f",mean(zhibiao[,9]))   ## Output the RPD of the test set
-sprintf("Test_RF_nRMSE is ：%f",mean(zhibiao[,10]))   ## Output the nRMSE of the test set
+           test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))}   
+## Sets the number of seeds to use for machine learning modeling
+seed <- seq(10000,11000,100)    
+## The number of seed number is extracted and used to calculate the average value of precision index
+n <- length(seed)    
+## The set number of seeds is applied for circular machine learning modeling
+zhibiao_list <- lapply(seed, RF_func)    
+## Define a matrix for storing precision indicators and calculating average values
+zhibiao <- matrix(as.numeric(unique(unlist(zhibiao_list))),nrow = n, ncol = 10, byrow = TRUE)   
+## Output the RMSE of the training set
+sprintf("Train_RF_RMSE is ：%f",mean(zhibiao[,1]))   
+## Output the R2 of the training set
+sprintf("Train_RF_R2 is ：%f",mean(zhibiao[,2]))   
+## Output the MAE of the training set
+sprintf("Train_RF_MAE is ：%f",mean(zhibiao[,3]))   
+## Output the RPD of the training set
+sprintf("Train_RF_RPD is ：%f",mean(zhibiao[,4]))   
+## Output the nRMSE of the training set
+sprintf("Train_RF_nRMSE is ：%f",mean(zhibiao[,5]))  
+## Output the RMSE of the test set
+sprintf("Test_RF_RMSE is ：%f",mean(zhibiao[,6]))   
+## Output the R2 of the test set
+sprintf("Test_RF_R2 is ：%f",mean(zhibiao[,7]))   
+## Output the MAE of the test set
+sprintf("Test_RF_MAE is ：%f",mean(zhibiao[,8]))   
+## Output the RPD of the test set
+sprintf("Test_RF_RPD is ：%f",mean(zhibiao[,9]))   
+## Output the nRMSE of the test set
+sprintf("Test_RF_nRMSE is ：%f",mean(zhibiao[,10]))   
+
 ##################################################################
 ##The built model is used to predict the data of the test set, and 1:1 line mapping is performed with the measured values of the test set, which is used to intuitively compare the prediction performance of the model
-data <- read.xlsx("E:\\data.xlsx")## Where "E:\\data.xlsx" is the path of data storage
-set.seed(500)  ## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
-index <- createDataPartition(data$SOC,p = 0.7)  ## 70% as the training set, 30% as the test set
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx")
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)  
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)  
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
 ##################################################################
 ##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
-RF_func <- function(seed){                       ## Define a machine learning function for a multi-seed loop
-set.seed(seed)      ## Model with different seed numbers
-control <- trainControl(method = "cv",number = 10, search="grid")    ## Set 10 fold cross validation
+## Define a machine learning function for a multi-seed loop
+RF_func <- function(seed){                       
+## Model with different seed numbers
+set.seed(seed)    
+## Set 10 fold cross validation
+control <- trainControl(method = "cv",number = 10, search="grid")    
 tune_grid <- expand.grid(mtry = rfreg$bestTune)
+## The optimal parameters are used as the model parameters for machine learning modeling
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
-                verbose = FALSE)   ## The optimal parameters are used as the model parameters for machine learning modeling
-yp <- predict(rfreg,newdata = test_data)   ## The established machine learning model is used to predict the test set data
-yp <- as.data.frame(yp)   ##  Convert the predicted test set dependent variable to data frame format
+                verbose = FALSE)   
+## The established machine learning model is used to predict the test set data
+yp <- predict(rfreg,newdata = test_data)   
+##  Convert the predicted test set dependent variable to data frame format
+yp <- as.data.frame(yp)   
 return(yp)
 }
-seed <- seq(10000,11000,100) ## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
-n <- length(seed)  ## The number of seed number is extracted and used to calculate the average value of precision index
-ypall <- lapply(seed, RF_func)    ## The set number of seeds is applied for circular machine learning modeling
-total <- 0   ##  Initializes a variable to hold the predicted test set dependent variable
+## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
+seed <- seq(10000,11000,100) 
+## The number of seed number is extracted and used to calculate the average value of precision index
+n <- length(seed)  
+## The set number of seeds is applied for circular machine learning modeling
+ypall <- lapply(seed, RF_func)    
+##  Initializes a variable to hold the predicted test set dependent variable
+total <- 0   
+##  Add up the results of each run
 for (i in 1:n) {
   total <-total+ypall[[i]]
-}    ##  Add up the results of each run
-ypall_mean <- total/n       ## Gets the average of multiple model predictions
+}    
+## Gets the average of multiple model predictions
+ypall_mean <- total/n
+
 ##################################################################
-##对整个研究区的SOC含量进行预测，即将各像元的自变量值带入建立好的模型中，预测SOC，见README中步骤D
-data <- read.xlsx("E:\\data.xlsx")
-fanyan_data <- read.xlsx("E:\\fanyan.xlsx")
-set.seed(500)
-index <- createDataPartition(data$SOC,p = 0.7)
+##The SOC content of the whole study area is predicted, that is, the independent variable values of each pixel are brought into the established model to predict SOC, see step F in README
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx") 
+## Read the independent variable data of each pixel in the study area
+fanyan_data <- read.xlsx("E:\\fanyan.xlsx")   
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)  
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)  
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
-RF_func <- function(seed){
-  set.seed(seed)
- control <- trainControl(method = "cv",number = 10, search="grid")
+##################################################################
+##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+## Define a machine learning function for a multi-seed loop
+RF_func <- function(seed){                       
+## Model with different seed numbers
+set.seed(seed)    
+## Set 10 fold cross validation
+control <- trainControl(method = "cv",number = 10, search="grid")    
 tune_grid <- expand.grid(mtry = rfreg$bestTune)
+## The optimal parameters are used as the model parameters for machine learning modeling
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
-                verbose = FALSE)
-fanyan_yp <- predict(rfreg,newdata = fanyan_data)
+                verbose = FALSE)  
+##The independent variable value of each pixel is brought into the model to predict the SOC value of each pixel
+fanyan_yp <- predict(rfreg,newdata = fanyan_data)   
+##  Convert the SOC value to data frame format
 fanyan_yp <- as.data.frame(fanyan_yp)
 return(fanyan_yp)
 }
+## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
 seed <- seq(10000,11000,100)
+## The number of seed number is extracted and used to calculate the average value of precision index
 n <- length(seed)
+## The set number of seeds is applied for circular machine learning modeling
 fanyan_ypall <- lapply(seed, RF_func)
+##  Initializes a variable to hold the predicted SOC value
 total <- 0
+##  Add up the results of each run
 for (i in 1:n) {
   total <-total+fanyan_ypall[[i]]
 }
+## Gets the average of multiple model predictions
 fanyan_ypall_mean <- total/n
-write.table(fanyan_ypall_mean,file = "E:\\研究生论文\\真正的大论文\\remotesensingdata\\FANYAN\\RF_200W-_prediction_mean.txt",row.names = F,col.names = F)
-
-a <- nrow(fanyan_data)
-danxiangyuan <- rep(0,100)
-quantu <- rep(0,a)
-for(k in 1:a){
-  for (j in 1:100){
-    danxiangyuan[j] <- fanyan_ypall[[j]][["fanyan_yp"]][k]
-  }
-  quantu[k] <- sd(danxiangyuan)
-}
-write.table(quantu,file = "E:\\研究生论文\\真正的大论文\\remotesensingdata\\FANYAN\\RF_200W-_prediction_SD.txt",row.names = F,col.names = F)
-
-#重要性
+## Write out the inversion results
+write.table(fanyan_ypall_mean,file = "E:\\FANYAN.txt",row.names = F,col.names = F)
+##################################################################
+#
 data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
 set.seed(500)
 index <- createDataPartition(data$SOC,p = 0.7)
@@ -142,4 +204,8 @@ for (i in 1:n) {
   total <-total+zhibiao_list[[i]]
 }
 zhongyaoxing <- total/length(seed)
+
+
+
+
 
