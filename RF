@@ -180,32 +180,45 @@ fanyan_ypall_mean <- total/n
 ## Write out the inversion results
 write.table(fanyan_ypall_mean,file = "E:\\FANYAN.txt",row.names = F,col.names = F)
 ##################################################################
-#
-data <- read.xlsx("E:\\研究生论文\\真正的大论文\\建模\\data筛选.xlsx")
-set.seed(500)
-index <- createDataPartition(data$SOC,p = 0.7)
+##Evaluate the importance of each variable in the prediction model, obtain the importance of 100 model cycles, and calculate the relative importance of each variable
+## Where "E:\\data.xlsx" is the path of data storage
+data <- read.xlsx("E:\\data.xlsx") 
+## Read the independent variable data of each pixel in the study area
+fanyan_data <- read.xlsx("E:\\fanyan.xlsx")   
+## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
+set.seed(500)  
+## 70% as the training set, 30% as the test set
+index <- createDataPartition(data$SOC,p = 0.7)  
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
-RF_func <- function(seed){
-set.seed(seed)
-control <- trainControl(method = "cv",number = 10, search="grid")
+##################################################################
+##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+## Define a machine learning function for a multi-seed loop
+RF_func <- function(seed){                       
+## Model with different seed numbers
+set.seed(seed)    
+## Set 10 fold cross validation
+control <- trainControl(method = "cv",number = 10, search="grid")    
 tune_grid <- expand.grid(mtry = rfreg$bestTune)
+## The optimal parameters are used as the model parameters for machine learning modeling
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
-                verbose = FALSE)
+                verbose = FALSE)  
+## Get the importance of each variable from the model
 zhongyaoxing <- varImp(rfreg)[["importance"]]
   return(zhongyaoxing)
 }
+## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
 seed <- seq(10000,11000,100)
+## The number of seed number is extracted and used to calculate the average value of precision index
 n <- length(seed)
-zhibiao_list <- lapply(seed, RF_func)
+## The set number of seeds is applied for circular machine learning modeling
+zhongyaoxing_list <- lapply(seed, RF_func)
+##  Initialize a variable to store the importance of each predictor
 total <- 0
+##  Add the importance of each variable for each loop
 for (i in 1:n) {
-  total <-total+zhibiao_list[[i]]
+  total <-total+zhongyaoxing_list[[i]]
 }
+##  The average value of variable importance is obtained by dividing the number of models
 zhongyaoxing <- total/length(seed)
-
-
-
-
-
