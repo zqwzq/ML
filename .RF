@@ -1,14 +1,19 @@
-#随机森林分出训练集和测试集
-data <- read.xlsx("E:\\研究生论文\\大论文\\数据\\建模\\筛选2.xlsx")
-set.seed(500)
+##################################################################
+##The data is read and randomly divided 7:3 into training sets and test sets
+data <- read.xlsx("E:\\data.xlsx")     ## Where "E:\\data.xlsx" is the path of data storage
+set.seed(500)     ##Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed
 index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
+##################################################################
+##The mesh is defined and the optimal parameters are adjusted by grid search method
 rfcontrol <- trainControl(method = "cv",number = 10, search="grid")
-tune_grid <- expand.grid(mtry =seq(1,56,1))
+tune_grid <- expand.grid(mtry =seq(1,56,1))     
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = rfcontrol,tuneGrid = tune_grid, verbose = FALSE)
-rfreg$bestTune
+rfreg$bestTune          ##Print the optimal parameter combination
+##################################################################
+##使用不同种子数进行机器学习模型建立，并输出训练集和测试集的精度指标，详细原理参考README里的步骤
 RF_func <- function(seed){
 set.seed(seed)
 control <- trainControl(method = "cv",number = 10, search="grid")
