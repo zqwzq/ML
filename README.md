@@ -1,5 +1,3 @@
-[ML_DATA.xlsx](https://github.com/user-attachments/files/16121928/ML_DATA.xlsx)
-
 # ML 
 Applicable data format: Variables extracted from remote sensing images were used as independent variables, and measured soil organic carbon content was used as dependent variable. In the Excel table, the first column is measured organic carbon content, which is named SOC, and the rest is listed as remote sensing variables, such as NDVI,NDWI, etc
 
@@ -18,3 +16,7 @@ D. The seed number is consistent, and 100 models established in step C are execu
 E. The number of seeds remains the same, and the 100 models established in step C are executed again to output the relative importance of each variable in each model, and the relative importance of each variable is obtained by adding and normalizing the relative importance of each variable.
 
 F. Use the established machine learning model to predict the dependent variables in the whole study area based on the variables extracted from the whole study area, and output the predicted value.
+
+DATA:
+[ML_DATA.xlsx](https://github.com/user-attachments/files/16126162/ML_DATA.xlsx)
+[ID+SOC+VARIABLES.xlsx](https://github.com/user-attachments/files/16126160/ID%2BSOC%2BVARIABLES.xlsx)
