@@ -60,7 +60,7 @@ return(c(rfreg$results$RMSE,rfreg$results$Rsquared,
            rfreg$results$MAE,train_rpd,train_nrmse,
            test_rmse,test_rsquared,test_mae,test_rpd,test_nrmse))}   
 ## Sets the number of seeds to use for machine learning modeling
-seed <- seq(10000,11000,100)    
+seed <- seq(10000,11000,10)    
 ## The number of seed number is extracted and used to calculate the average value of precision index
 n <- length(seed)    
 ## The set number of seeds is applied for circular machine learning modeling
@@ -118,7 +118,7 @@ yp <- as.data.frame(yp)
 return(yp)
 }
 ## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
-seed <- seq(10000,11000,100) 
+seed <- seq(10000,11000,10) 
 ## The number of seed number is extracted and used to calculate the average value of precision index
 n <- length(seed)  
 ## The set number of seeds is applied for circular machine learning modeling
@@ -164,7 +164,7 @@ fanyan_yp <- as.data.frame(fanyan_yp)
 return(fanyan_yp)
 }
 ## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
-seed <- seq(10000,11000,100)
+seed <- seq(10000,11000,10)
 ## The number of seed number is extracted and used to calculate the average value of precision index
 n <- length(seed)
 ## The set number of seeds is applied for circular machine learning modeling
@@ -209,7 +209,7 @@ zhongyaoxing <- varImp(rfreg)[["importance"]]
   return(zhongyaoxing)
 }
 ## Sets the number of seeds to use for machine learning modeling. Consistent with modeling.
-seed <- seq(10000,11000,100)
+seed <- seq(10000,11000,10)
 ## The number of seed number is extracted and used to calculate the average value of precision index
 n <- length(seed)
 ## The set number of seeds is applied for circular machine learning modeling
