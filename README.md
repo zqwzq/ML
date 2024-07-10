@@ -19,6 +19,6 @@ F. Use the established machine learning model to predict the dependent variables
 
 DATA:
 [ML_DATA.xlsx](https://github.com/user-attachments/files/16126162/ML_DATA.xlsx)
-[ID+SOC+VARIABLES.xlsx](https://github.com/user-attachments/files/16126160/ID%2BSOC%2BVARIABLES.xlsx)
+[ID+SOC+Longitude+latitude.xlsx](https://github.com/user-attachments/files/16154366/ID%2BSOC%2BLongitude%2Blatitude.xlsx)
 [document description.txt](https://github.com/user-attachments/files/16126228/document.description.txt)
 
