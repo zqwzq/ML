@@ -18,7 +18,5 @@ E. The number of seeds remains the same, and the 100 models established in step 
 F. Use the established machine learning model to predict the dependent variables in the whole study area based on the variables extracted from the whole study area, and output the predicted value.
 
 DATA:
-[ML_DATA.xlsx](https://github.com/user-attachments/files/16126162/ML_DATA.xlsx)
-[ID+SOC+Longitude+latitude.xlsx](https://github.com/user-attachments/files/16154366/ID%2BSOC%2BLongitude%2Blatitude.xlsx)
-[document description.txt](https://github.com/user-attachments/files/16126228/document.description.txt)
-
+[ID+SOC+Longitude+Latitude+Variables.xlsx](https://github.com/user-attachments/files/16154441/ID%2BSOC%2BLongitude%2BLatitude%2BVariables.xlsx)
+[Document description.txt](https://github.com/user-attachments/files/16154421/Document.description.txt)
