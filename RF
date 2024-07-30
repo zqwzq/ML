@@ -1,7 +1,7 @@
 ##################################################################
 ## The data is read and randomly divided 7:3 into training sets and test sets
-## Read data.
-data <- read.xlsx("E:\\data.xlsx")
+## Reading data.
+data <- read.xlsx("data.xlsx")
 ## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
 set.seed(500)   
 ## 70% as the training set, 30% as the test set
@@ -22,7 +22,7 @@ rfreg <- train(SOC ~., data = train_data, method = "rf",
 rfreg$bestTune          
 
 ##################################################################
-##Use different seed numbers to build machine learning models, and output precision indicators of training sets and test sets. Refer to Step C in README for details.
+## Use different seed numbers to build machine learning models, and output precision indicators of training sets and test sets. Refer to Step C in README for details.
 ## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){        
 ## Model with different seed numbers
@@ -90,7 +90,8 @@ sprintf("Test_RF_nRMSE is ：%f",mean(zhibiao[,10]))
 
 
 ##################################################################
-##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+## The built model is used to predict the data of the test set, and 1:1 line mapping is performed with the measured values of the test set, which is used to intuitively compare the prediction performance of the model
+## Use different seed numbers to build machine learning models, and output dependent variable of test sets. Refer to Step D in README for details.
 ## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){                       
 ## Model with different seed numbers
@@ -125,7 +126,7 @@ ypall_mean <- total/n
 
 
 ##################################################################
-##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+##The SOC content of the whole study area is predicted, that is, the independent variable values of each pixel are brought into the established model to predict SOC, see step F in README
 ## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){                       
 ## Model with different seed numbers
@@ -162,7 +163,7 @@ write.table(fanyan_ypall_mean,file = "FANYAN.txt",row.names = F,col.names = F)
 
 
 ##################################################################
-##Use different seed numbers to build machine learning models, and output dependent variable of training sets and test sets. Refer to Step D in README for details.
+##Evaluate the importance of each variable in the prediction model, obtain the importance of 100 model cycles, and calculate the relative importance of each variable
 ## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){                       
 ## Model with different seed numbers
