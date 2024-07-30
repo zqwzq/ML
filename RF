@@ -8,7 +8,6 @@ set.seed(500)
 index <- createDataPartition(data$SOC,p = 0.7)   
 test_data <- data[-index$Resample1,]
 train_data <- data[index$Resample1,]
-
 ##################################################################
 ## The mesh is defined and the optimal parameters are adjusted by grid search method
 ## Set 10 fold cross validation
@@ -125,7 +124,7 @@ ypall_mean <- total/n
 
 
 ##################################################################
-##The SOC content of the whole study area is predicted, that is, the independent variable values of each pixel are brought into the established model to predict SOC, see step F in README
+## The SOC content of the whole study area is predicted, that is, the independent variable values of each pixel are brought into the established model to predict SOC, see step F in README
 RF_func <- function(seed){                       
 ## Model with different seed numbers
 set.seed(seed)    
@@ -161,7 +160,7 @@ write.table(fanyan_ypall_mean,file = "FANYAN.txt",row.names = F,col.names = F)
 
 
 ##################################################################
-##Evaluate the importance of each variable in the prediction model, obtain the importance of 100 model cycles, and calculate the relative importance of each variable
+## Evaluate the importance of each variable in the prediction model, obtain the importance of 100 model cycles, and calculate the relative importance of each variable
 RF_func <- function(seed){                       
 ## Model with different seed numbers
 set.seed(seed)    
