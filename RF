@@ -92,7 +92,6 @@ sprintf("Test_RF_nRMSE is ：%f",mean(zhibiao[,10]))
 ##################################################################
 ## The built model is used to predict the data of the test set, and 1:1 line mapping is performed with the measured values of the test set, which is used to intuitively compare the prediction performance of the model
 ## Use different seed numbers to build machine learning models, and output dependent variable of test sets. Refer to Step D in README for details.
-## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){                       
 ## Model with different seed numbers
 set.seed(seed)    
@@ -127,7 +126,6 @@ ypall_mean <- total/n
 
 ##################################################################
 ##The SOC content of the whole study area is predicted, that is, the independent variable values of each pixel are brought into the established model to predict SOC, see step F in README
-## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){                       
 ## Model with different seed numbers
 set.seed(seed)    
@@ -164,7 +162,6 @@ write.table(fanyan_ypall_mean,file = "FANYAN.txt",row.names = F,col.names = F)
 
 ##################################################################
 ##Evaluate the importance of each variable in the prediction model, obtain the importance of 100 model cycles, and calculate the relative importance of each variable
-## Define a machine learning function for a multi-seed loop
 RF_func <- function(seed){                       
 ## Model with different seed numbers
 set.seed(seed)    
