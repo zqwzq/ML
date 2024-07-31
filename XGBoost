@@ -31,7 +31,7 @@ xgbreg <- train(SOC ~., data = train_data, method = "xgbTree",
 print(xgbreg$bestTune)
 
 ##################################################################
-##Use different seed numbers to build machine learning models, and output precision indicators of training sets and test sets. Refer to Step C in README for details.
+## Use different seed numbers to build machine learning models, and output precision indicators of training sets and test sets. Refer to Step C in README for details.
 ## Define a machine learning function for a multi-seed loop
 XGB_func <- function(seed){
 ## Model with different seed numbers
