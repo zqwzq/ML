@@ -1,5 +1,5 @@
 # ML 
-Applicable data format: Variables extracted from remote sensing images were used as independent variables, and measured soil organic carbon content was used as dependent variable. In the Excel table, the first column is measured organic carbon content, which is named SOC, and the rest is listed as remote sensing variables, such as NDVI,NDWI, etc
+Applicable data format: Variables extracted from remote sensing images were used as independent variables, and measured soil organic carbon content was used as dependent variable. In the Excel table, the first column is measured organic carbon content, which is named SOC, and the rest is listed as remote sensing variables, such as NDVI,NDWI, etc.
 
 This code is used for machine learning to build predictive models, variable importance analysis and 1:1 line output of measured and predicted values (RF\BRT\XGBOOST)
 
