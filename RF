@@ -135,7 +135,7 @@ tune_grid <- expand.grid(mtry = rfreg$bestTune)
 rfreg <- train(SOC ~., data = train_data, method = "rf",
                 trControl = control,tuneGrid = tune_grid,
                 verbose = FALSE)  
-##The independent variable value of each pixel is brought into the model to predict the SOC value of each pixel
+## The independent variable value of each pixel is brought into the model to predict the SOC value of each pixel
 fanyan_yp <- predict(rfreg,newdata = fanyan_data)   
 ##  Convert the SOC value to data frame format
 fanyan_yp <- as.data.frame(fanyan_yp)
