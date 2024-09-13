@@ -3,7 +3,7 @@
 ## Reading data. where "data.xlsx" is data storage
 data <- read.xlsx("data.xlsx")
 ## Select the seed number to divide the data set. Note that the seed number of the partition data set cannot be changed.
-set.seed(500)
+set.seed(200)
 ## 70% as the training set, 30% as the test set
 index <- createDataPartition(data$SOC,p = 0.7)
 test_data <- data[-index$Resample1,]
