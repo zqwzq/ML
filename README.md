@@ -15,7 +15,7 @@ D. The seed number is consistent, and 100 models established in step C are execu
 
 E. The number of seeds remains the same, and the 100 models established in step C are executed again to output the relative importance of each variable in each model, and the relative importance of each variable is obtained by adding and normalizing the relative importance of each variable.
 
-F. Use the established machine learning model to predict the dependent variables in the whole study area based on the variables extracted from the whole study area, and output the predicted value.
+F. Use the established machine learning model to predict the dependent variables in the whole study area based on the variables extracted from the whole study area, and output the predicted value
 
 DATA:
 [ID+SOC+Longitude+Latitude+Variables.xlsx](https://github.com/user-attachments/files/16421744/ID%2BSOC%2BLongitude%2BLatitude%2BVariables.xlsx)
