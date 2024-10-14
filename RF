@@ -1,4 +1,4 @@
-##################################################################
+#################################################################
 ## The data is read and randomly divided 7:3 into training sets and test sets
 ## Reading data.
 data <- read.xlsx("data.xlsx")
